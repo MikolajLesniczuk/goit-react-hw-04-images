@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SearchBar } from './searchBar/searchBar';
 import { ImageGallery } from './imageGallery/imageGallery';
-
+import axios from 'axios';
 import { Button } from './Button/Button';
 import { Loader } from './Loader/Loader';
 
@@ -37,18 +37,31 @@ const App = () => {
   useEffect(() => {
     fetchApi();
     // eslint-disable-next-line
-  }, [inputQuery, page]);
+  }, [inputQuery]);
 
   const handleChange = e => {
     const { value } = e.target;
+    setImages([]);
     setInputQuery(value);
     setPage(1);
-    setImages([]);
   };
 
-  const moreload = e => {
+  const moreload = async e => {
     e.preventDefault();
-    setPage(prevPage => prevPage + 1);
+    const nextPage = page + 1;
+    setPage(nextPage);
+
+    try {
+      const response = await axios.get(
+        `https://pixabay.com/api/?q=${inputQuery}&page=${nextPage}&key=${APIKEY}&image_type=photo&orientation=horizontal&per_page=12`
+      );
+      const newImages = response.data.hits;
+
+      setImages(prevImages => [...prevImages, ...newImages]);
+      setPage(nextPage);
+    } catch (error) {
+      console.error('error', error.toString());
+    }
   };
 
   const handleSubmit = e => {
