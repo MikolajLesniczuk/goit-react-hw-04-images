@@ -1,41 +1,31 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import s from './ImageGalleryItem.module.css';
-import Modal from 'components/Modal/Modal';
+import { Modal } from 'components/Modal/Modal';
 
-class ImageGalleryItem extends Component {
-  state = {
-    showModal: false,
+const ImageGalleryItem = ({ image }) => {
+  const [showModal, setShowmodal] = useState(false);
+
+  const openModal = () => {
+    setShowmodal(true);
   };
 
-  openModal = () => {
-    this.setState({ showModal: true });
+  const closeModal = () => {
+    setShowmodal(false);
   };
 
-  closeModal = () => {
-    this.setState({ showModal: false });
-  };
+  return (
+    <li className={s.ImageGalleryItem}>
+      <img
+        src={image.webformatURL}
+        alt={image.id}
+        className={s.image}
+        onClick={openModal}
+      />
+      {showModal && (
+        <Modal largeImage={image.largeImageURL} closeModal={closeModal} />
+      )}
+    </li>
+  );
+};
 
-  render() {
-    const { image } = this.props;
-    const { showModal } = this.state;
-
-    return (
-      <li className={s.ImageGalleryItem}>
-        <img
-          src={image.webformatURL}
-          alt={image.id}
-          className={s.image}
-          onClick={this.openModal}
-        />
-        {showModal && (
-          <Modal
-            largeImage={image.largeImageURL}
-            closeModal={this.closeModal}
-          />
-        )}
-      </li>
-    );
-  }
-}
-
-export default ImageGalleryItem;
+export { ImageGalleryItem };

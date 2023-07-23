@@ -1,105 +1,73 @@
-import React, { Component } from 'react';
-import SearchBar from './searchBar/searchBar';
-import ImageGallery from './imageGallery/imageGallery';
+import React, { useState, useEffect } from 'react';
+import { SearchBar } from './searchBar/searchBar';
+import { ImageGallery } from './imageGallery/imageGallery';
 
-import Button from './Button/Button';
-import Loader from './Loader/Loader';
+import { Button } from './Button/Button';
+import { Loader } from './Loader/Loader';
 
 const APIKEY = '36411349-fd3335cbc8c141eadb26de171';
 
-class App extends Component {
-  state = {
-    images: [],
-    page: 1,
-    per_page: 12,
-    inputQuery: '',
-    isLoading: true,
-    largeImage: '',
-    selectedImage: null,
-    result: 0,
-  };
+const App = () => {
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(12);
+  const [inputQuery, setInputQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [largeImage] = useState('');
+  const [result, setResult] = useState(0);
 
-  fetchApi = async inputQuery => {
+  const fetchApi = async () => {
     try {
-      const { page, per_page, inputQuery } = this.state;
-
+      setIsLoading(true);
       const response = await fetch(
-        `https://pixabay.com/api/?q=${inputQuery}&page=${page}&key=${APIKEY}&image_type=photo&orientation=horizontal&per_page=${per_page}}`
+        `https://pixabay.com/api/?q=${inputQuery}&page=${page}&key=${APIKEY}&image_type=photo&orientation=horizontal&per_page=${perPage}`
       );
       const data = await response.json();
-      // console.log(data.totalHits);
-      this.setState(prevState => ({
-        ...prevState,
-        images: [...prevState.images, ...data.hits],
-        result: data.totalHits,
-      }));
+
+      setImages(prevImages => [...prevImages, ...data.hits]);
+
+      setResult(data.totalHits);
     } catch (e) {
       console.log('error', e.toString());
-      this.setState(prevState => ({ ...prevState, isLoading: false }));
     } finally {
-      this.setState(prevState => ({ ...prevState, isLoading: false }));
+      setIsLoading(false);
     }
   };
 
-  async componentDidMount() {
-    await this.fetchApi();
-  }
+  useEffect(() => {
+    fetchApi();
+    // eslint-disable-next-line
+  }, [inputQuery, page]);
 
-  async componentDidUpdate(prevProps, prevState) {
-    if (this.state.inputQuery !== prevState.inputQuery) {
-      this.setState({ isLoading: true, images: [], page: 1 });
-      this.fetchApi();
-    }
-    if (
-      this.state.inputQuery === prevState.inputQuery &&
-      this.state.page !== prevState.page
-    ) {
-      this.fetchApi();
-    }
-  }
+  const handleChange = e => {
+    const { value } = e.target;
+    setInputQuery(value);
+    setPage(1);
+    setImages([]);
+  };
 
-  handleSubmit = e => {
+  const moreload = e => {
     e.preventDefault();
-    this.fetchApi(this.state.inputQuery);
-    // this.setState(prevState => ({ ...prevState, inputQuery: '' }));
+    setPage(prevPage => prevPage + 1);
   };
 
-  handleChange = e => {
-    const { value, name } = e.target;
-    this.setState(prevState => ({ ...prevState, [name]: value }));
+  const handleSubmit = e => {
+    e.preventDefault();
+    fetchApi(inputQuery);
   };
+  const Show = images.length > 11;
+  const more = result > images.length;
 
-  moreload = () => {
-    this.setState(prevState => ({ ...prevState, page: prevState.page + 1 }));
-  };
+  return (
+    <div>
+      <SearchBar handleSubmit={handleSubmit} handleChange={handleChange} />
+      {isLoading && <Loader />}
+      {inputQuery !== '' && !isLoading && (
+        <ImageGallery images={images} largeImage={largeImage} />
+      )}
+      {Show && inputQuery !== '' && more && <Button moreload={moreload} />}
+    </div>
+  );
+};
 
-  handleImageClick = largeImageURL => {
-    this.setState({ selectedImage: largeImageURL });
-  };
-
-  render() {
-    const showMore = this.state.images.length > 12;
-    const more = this.state.result > this.state.images.length;
-    // const istotal = this.state.result > showMore;
-    // console.log('czy ja tu', this.state.images);
-    const { images, isLoading, largeImage } = this.state;
-
-    return (
-      <div>
-        <SearchBar
-          handleSubmit={this.handleSubmit}
-          handleChange={this.handleChange}
-        />
-        {isLoading && <Loader />}
-        {this.state.inputQuery !== '' && !isLoading && (
-          <ImageGallery images={images} largeImage={largeImage} />
-        )}
-        {showMore && this.state.inputQuery !== '' && more && (
-          <Button onClick={this.moreload} />
-        )}
-      </div>
-    );
-  }
-}
-
-export default App;
+export { App };
